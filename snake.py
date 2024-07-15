@@ -40,6 +40,7 @@ class Snake:
         self.segment_size = GRID_SIZE  # Initial segment size
         self.snake_speed = int(10 * 1.65)  # Initial speed of the snake
         self.speed_increase_rate = 1.3
+        self.score = 0  # Initialize score
 
     def update(self, food):
         # Move the snake
@@ -50,6 +51,9 @@ class Snake:
         if new_head == food.position:
             self.grow = True
             food.randomize_position()
+
+            # Increment score by 10 on food consumption
+            self.score += 10
 
             # Change colors on food consumption
             self.color_set_index = (self.color_set_index + 1) % len(color_sets)
@@ -218,6 +222,9 @@ def main():
         snake.draw(screen)
         food.draw(screen)
 
+        # Display score
+        display_text(screen, f"Score: {snake.score}", (255, 255, 255), GRID_PADDING + 20, 20)
+
         # Update display
         pygame.display.flip()
 
@@ -229,6 +236,7 @@ def main():
             screen.fill((0, 0, 0))  # Black background
             pygame.draw.rect(screen, (255, 105, 180), (GRID_PADDING, 0, SCREEN_WIDTH - 2 * GRID_PADDING, SCREEN_HEIGHT), 3)
             display_text(screen, "Game Over", (255, 255, 255), SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50)
+            display_text(screen, f"Score: {snake.score}", (255, 255, 255), SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2)
             display_text(screen, "Press R to restart or Q to quit", (255, 255, 255), SCREEN_WIDTH // 2 - 180, SCREEN_HEIGHT // 2 + 50)
             pygame.display.flip()
             for event in pygame.event.get():
