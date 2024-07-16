@@ -37,62 +37,68 @@ class Snake:
         self.color_set_index = 0  # Start with the first color set
         self.color = color_sets[self.color_set_index]['snake']  # Initial snake color
         self.segment_size = GRID_SIZE  # Initial segment size
-        self.snake_speed = int(10 * 1.65)  # Initial speed of the snake
-        self.speed_increase_rate = 1.3
+        self.snake_speed = int(10 * 1.25)  # Initial speed of the snake
         self.score = 0  # Initialize score
         self.multiplier = 0  # Initialize multiplier
         self.foods = []  # List to hold multiple food items
+        self.paused = False  # Flag to track if the game is paused
 
     def update(self):
-        # Move the snake
-        head_x, head_y = self.body[0]
-        new_head = (head_x + self.direction[0], head_y + self.direction[1])
+        if not self.paused:
+            # Move the snake
+            head_x, head_y = self.body[0]
+            new_head = (head_x + self.direction[0], head_y + self.direction[1])
 
-        # Check if the snake eats any food
-        for food in self.foods[:]:  # Using [:] to iterate over a copy, since we modify the list in-place
-            if new_head == food.position:
-                self.grow = True
-                # Check if snake's color matches food's color
-                if self.color == food.color:
-                    self.multiplier += 1
-                else:
-                    self.multiplier = 0
-                self.score += 5  # Increment score by 5 on food consumption
-                self.foods.remove(food)  # Remove the consumed food
+            # Check if the snake eats any food
+            for food in self.foods[:]:
+                if new_head == food.position:
+                    self.grow = True
+                    # Check if snake's color matches food's color
+                    if self.color == food.color:
+                        self.multiplier += 1
+                    else:
+                        self.multiplier = 0
 
-                # Spawn new random number of foods (1-3)
-                num_new_foods = random.randint(1, 3)
-                for _ in range(num_new_foods):
-                    if len(self.foods) < MAX_FOODS:
-                        new_food = Food()
-                        new_food.color = color_sets[random.randint(0, len(color_sets) - 1)]['food']  # Random color
-                        self.foods.append(new_food)
+                    # Calculate score based on new rules
+                    self.score += 5 + self.multiplier * 10
 
-                # Change colors on food consumption
-                self.color_set_index = (self.color_set_index + 1) % len(color_sets)
-                self.color = color_sets[self.color_set_index]['snake']
+                    self.foods.remove(food)
 
-        # Add new head
-        self.body.insert(0, new_head)
+                    # Spawn new random number of foods (1-3)
+                    num_new_foods = random.randint(1, 3)
+                    for _ in range(num_new_foods):
+                        if len(self.foods) < MAX_FOODS:
+                            new_food = Food()
+                            new_food.color = color_sets[random.randint(0, len(color_sets) - 1)]['food']  # Random color
+                            self.foods.append(new_food)
 
-        # If not growing, remove the tail
-        if not self.grow:
-            self.body.pop()
-        else:
-            self.grow = False
+                    # Change colors on food consumption
+                    self.color_set_index = (self.color_set_index + 1) % len(color_sets)
+                    self.color = color_sets[self.color_set_index]['snake']
 
-        # Increase snake speed with its length
-        self.snake_speed = 5 + len(self.body) // 3
+            # Add new head
+            self.body.insert(0, new_head)
+
+            # If not growing, remove the tail
+            if not self.grow:
+                self.body.pop()
+            else:
+                self.grow = False
+
+            # Increase snake speed with its length
+            self.snake_speed = 5 + len(self.body) // 3
 
     def change_direction(self, direction):
         if direction == 'UP' and self.direction != (0, 1):
             self.direction = (0, -1)
-        elif direction == 'DOWN' and self.direction != (0, -1):
+        elif direction == 'DOWN' and self.direction != (0, -1):  # Adjusted condition
             self.direction = (0, 1)
         elif direction == 'LEFT' and self.direction != (1, 0):
             self.direction = (-1, 0)
         elif direction == 'RIGHT' and self.direction != (-1, 0):
             self.direction = (1, 0)
+        elif direction == 'PAUSE':
+            self.paused = not self.paused  # Toggle pause state
 
     def check_collision(self):
         # Check wall collision
@@ -113,8 +119,15 @@ class Snake:
         for food in self.foods:
             food.draw(screen)
 
+        # Display score outside play area
+        display_text(screen, f"Score: {self.score}", (255, 255, 255), SCREEN_WIDTH - GRID_PADDING - 180, 20, align="right")
+
         # Display multiplier below the score
-        display_text(screen, f"Multiplier: {self.multiplier}", (255, 255, 255), GRID_PADDING + 20, 60)
+        display_text(screen, f"Multiplier: {self.multiplier}", (255, 255, 255), SCREEN_WIDTH - GRID_PADDING - 180, 60, align="right")
+
+        # Display pause message if paused
+        if self.paused:
+            display_text(screen, "Paused", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
 
 
 # Food class
@@ -152,11 +165,21 @@ class GameState:
         self.end_screen = False
 
 
-# Function to display text
-def display_text(screen, text, color, x, y):
-    font = pygame.font.Font(None, 36)
+# Function to display text with modern font
+def display_text(screen, text, color, x, y, align="left"):
+    font = pygame.font.Font(pygame.font.get_default_font(), 36)
     text_surface = font.render(text, True, color)
-    screen.blit(text_surface, (x, y))
+    text_rect = text_surface.get_rect()
+
+    if align == "right":
+        text_rect.right = x
+    elif align == "center":
+        text_rect.centerx = x
+    else:
+        text_rect.left = x
+
+    text_rect.y = y
+    screen.blit(text_surface, text_rect)
 
 
 # Main function
@@ -171,13 +194,13 @@ def main():
     # Initialize clock
     clock = pygame.time.Clock()
 
-    # Initialize snake and initial food
+    # Initialize snake and food
     snake = Snake()
     initial_food = Food()
     initial_food.color = color_sets[0]['food']
     snake.foods.append(initial_food)
 
-    # Game loop
+    # Main game loop
     while True:
         # Event handling
         for event in pygame.event.get():
@@ -185,7 +208,7 @@ def main():
                 return
             elif event.type == pygame.KEYDOWN:
                 if game_state.start_screen:
-                    game_state.start_screen = False  # Exit start screen on any key press
+                    game_state.start_screen = False  # Start the game on any key press
                 elif event.key == pygame.K_UP:
                     snake.change_direction('UP')
                 elif event.key == pygame.K_DOWN:
@@ -194,6 +217,8 @@ def main():
                     snake.change_direction('LEFT')
                 elif event.key == pygame.K_RIGHT:
                     snake.change_direction('RIGHT')
+                elif event.key == pygame.K_p:
+                    snake.change_direction('PAUSE')  # Toggle pause state
                 elif game_state.game_over:
                     if event.key == pygame.K_r:  # Restart game
                         game_state.reset()
@@ -207,7 +232,8 @@ def main():
         # Start screen
         if game_state.start_screen:
             screen.fill((0, 0, 0))  # Black background
-            display_text(screen, "Press any key to start", (255, 255, 255), SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2)
+            display_text(screen, "Press R to start", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, align="center")
+            display_text(screen, "Use arrow keys to move the snake. Press P to pause.", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT - 40, align="center")
             pygame.display.flip()
             continue
 
@@ -215,10 +241,10 @@ def main():
         if game_state.game_over:
             screen.fill((0, 0, 0))  # Black background
             pygame.draw.rect(screen, (255, 105, 180), (GRID_PADDING, 0, SCREEN_WIDTH - 2 * GRID_PADDING, SCREEN_HEIGHT), 3)
-            display_text(screen, "Game Over", (255, 255, 255), SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50)
-            display_text(screen, f"Score: {snake.score}", (255, 255, 255), SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2)
-            display_text(screen, f"Multiplier: {snake.multiplier}", (255, 255, 255), SCREEN_WIDTH // 2 - 120, SCREEN_HEIGHT // 2 + 50)
-            display_text(screen, "Press R to restart or Q to quit", (255, 255, 255), SCREEN_WIDTH // 2 - 180, SCREEN_HEIGHT // 2 + 100)
+            display_text(screen, "Game Over", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50, align="center")
+            display_text(screen, f"Score: {snake.score}", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, align="center")
+            display_text(screen, f"Multiplier: {snake.multiplier}", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50, align="center")
+            display_text(screen, "Press R to restart or Q to quit", (255, 255, 255), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100, align="center")
             pygame.display.flip()
 
             # Reset the clock to limit frame rate for end screen
@@ -237,9 +263,6 @@ def main():
 
         # Draw snake and food
         snake.draw(screen)
-
-        # Display score
-        display_text(screen, f"Score: {snake.score}", (255, 255, 255), GRID_PADDING + 20, 20)
 
         # Update display
         pygame.display.flip()
