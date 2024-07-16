@@ -11,6 +11,14 @@ Game over screen with score and multiplier display.
 Responsive and intuitive controls using arrow keys.
 Randomized food spawns with different colors and effects on scoring.
 <br/><br/>
+Connect with me on social media:
+
+        LinkedIn: linkedin.com/in/sreekanth-p-s-867515290/
+        Github: github.com/nagaspammer1200
+        Discord: discordapp.com/users/newuserdontflame_27297_69611
+
+
+<br/><br/><br/>
 Installation<br/>
   1. Clone the repository:
   
@@ -46,9 +54,9 @@ To Do
   3. Add Help Menu
 <br/><br/>
 
-Contributing <br/>
-Contributions are welcome! If you find any issues or have suggestions for improvements, feel free to open an issue or create a pull request.
+Contributing <br/><br/>
+Contributions are welcome! If you find any issues or have suggestions for improvements, feel free to open an issue or create a pull request.<br/><br/><br/>
 
-
+If you like my Work, make sure to follow and reach out to me on my Social Media Platforms!
 
 Distributed under the MIT License. See LICENSE for more information.
